@@ -95,3 +95,108 @@ if __name__ == "__main__":
     my_graph.print_matrix(reachability_matrix, "Матриця Досяжності (Уоршелл)")
 
     print("\nГотово! Якщо ви бачите більше одиничок у другій таблиці, алгоритм працює.")
+
+------------------------------------------------------
+
+    import random
+import time
+import matplotlib.pyplot as plt
+import numpy as np
+
+class Graph:
+    def __init__(self, n, directed=True):
+        self.n = n
+        self.directed = directed
+        self.adj_matrix = [[0]*n for _ in range(n)]
+        self.adj_list = [[] for _ in range(n)]
+
+    # ---------------------------
+    # Додавання ребра
+    # ---------------------------
+    def add_edge(self, u, v):
+        if self.adj_matrix[u][v] == 0:
+            self.adj_matrix[u][v] = 1
+            self.adj_list[u].append(v)
+            if not self.directed:
+                self.adj_matrix[v][u] = 1
+                self.adj_list[v].append(u)
+
+    # ---------------------------
+    # Генерація випадкового орієнтованого графа
+    # ---------------------------
+    def generate_random(self, delta):
+        max_edges = self.n * (self.n - 1)
+        m = int(max_edges * delta)
+        possible_edges = [(i,j) for i in range(self.n) for j in range(self.n) if i != j]
+        chosen_edges = random.sample(possible_edges, m)
+        for u,v in chosen_edges:
+            self.add_edge(u,v)
+
+    # ---------------------------
+    # Алгоритм Уоршелла
+    # ---------------------------
+    def warshall(self):
+        reach = [row[:] for row in self.adj_matrix]  # копія матриці
+        n = self.n
+        for k in range(n):
+            for i in range(n):
+                for j in range(n):
+                    if reach[i][k] and reach[k][j]:
+                        reach[i][j] = 1
+        return reach
+
+    # ---------------------------
+    # Друк матриці у терміналі
+    # ---------------------------
+    def print_matrix(self):
+        print("Adjacency Matrix:")
+        header = "   " + " ".join(f"{i:2}" for i in range(self.n))
+        print(header)
+        for i, row in enumerate(self.adj_matrix):
+            print(f"{i:2} " + " ".join(str(val) for val in row))
+
+    # ---------------------------
+    # Візуалізація матриці кольоровою картою
+    # ---------------------------
+    def plot_matrix(self, matrix=None, title="Adjacency Matrix"):
+        if matrix is None:
+            matrix = self.adj_matrix
+        plt.figure(figsize=(6,6))
+        plt.imshow(matrix, cmap='Blues', interpolation='none')
+        plt.title(title)
+        plt.xlabel("To Vertex")
+        plt.ylabel("From Vertex")
+        plt.colorbar(label='Edge')
+        plt.show()
+
+
+# ---------------------------
+# Експеримент: вимір часу алгоритму Уоршелла
+# ---------------------------
+def run_experiment(sizes, delta):
+    print(f"{'n':>5} | {'Edges':>6} | {'Time (s)':>10}")
+    print("-"*30)
+    for n in sizes:
+        g = Graph(n, directed=True)
+        g.generate_random(delta)
+        num_edges = sum(len(neigh) for neigh in g.adj_list)
+        start_time = time.perf_counter()
+        reach_matrix = g.warshall()
+        end_time = time.perf_counter()
+        elapsed = end_time - start_time
+        print(f"{n:5} | {num_edges:6} | {elapsed:10.6f}")
+
+        # Візуалізація маленьких графів
+        if n <= 20:  # щоб не було занадто великих карт
+            g.print_matrix()
+            g.plot_matrix(title=f"Graph n={n}")
+
+
+# ---------------------------
+# Приклад запуску
+# ---------------------------
+if __name__ == "__main__":
+    sizes = [10, 15, 50]  # для маленьких n показуємо матрицю
+    delta = 0.2            # щільність 20%
+    run_experiment(sizes, delta)
+
