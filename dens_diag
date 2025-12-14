@@ -1,0 +1,75 @@
+import matplotlib.pyplot as plt
+import time
+import random
+
+
+# --- Ваш клас Graph та алгоритм (залишаємо без змін) ---
+class Graph:
+    def __init__(self, vertices):
+        self.vertices = vertices
+        self.matrix = [[0 for _ in range(vertices)] for _ in range(vertices)]
+
+    def den_generate(self, density):
+        for i in range(self.vertices):
+            for k in range(self.vertices):
+                if i == k: continue
+                if random.randint(1, 100) <= density:
+                    self.matrix[i][k] = 1
+
+    def warshall(self):
+        n = self.vertices
+        d_matrix = [row[:] for row in self.matrix]
+        for k in range(n):
+            for i in range(n):
+                for j in range(n):
+                    d_matrix[i][j] = d_matrix[i][j] or (d_matrix[i][k] and d_matrix[k][j])
+        return d_matrix
+
+
+# --- Клас для вимірювання часу ---
+class TimeCounting:
+    def __init__(self, iter_num):
+        self.iter_num = iter_num
+
+    def count(self, vertices, density):
+        total_time = 0
+        for _ in range(self.iter_num):
+            g = Graph(vertices)
+            g.den_generate(density)
+            start = time.time()
+            g.warshall()
+            end = time.time()
+            total_time += (end - start)
+        return total_time / self.iter_num
+
+
+# --- Побудова графіка ---
+
+# 1. Визначаємо параметри (як на вашому скріншоті)
+vertex_sizes = [50, 60, 70, 80, 100, 120, 140, 150, 170, 190]
+densities = [30, 40, 50, 60, 70]
+tester = TimeCounting(30)  # 20 ітерацій для кожної точки
+
+plt.figure(figsize=(12, 8))  # Розмір вікна
+
+# 2. Цикл по кожній кількості вершин
+for v in vertex_sizes:
+    times_for_v = []
+    print(f"Виконуємо розрахунки для V = {v}...")
+
+    for d in densities:
+        avg_time = tester.count(v, d)
+        times_for_v.append(avg_time)
+
+    # Малюємо лінію для поточної кількості вершин
+    plt.plot(densities, times_for_v, marker='o', label=f'{v} вершин')
+
+# 3. Налаштування оформлення (ідентично вашому фото)
+plt.title('Вплив щільності на час виконання (при фіксованому V)', fontsize=14)
+plt.xlabel('Щільність графа (%)', fontsize=12)
+plt.ylabel('Середній час виконання (сек)', fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.6)  # Пунктирна сітка
+plt.legend(title="К-ть вершин", bbox_to_anchor=(1.05, 1), loc='upper left')  # Легенда збоку
+
+plt.tight_layout()  # Щоб легенда не обрізалася
+plt.show()  # Відобразити результат
