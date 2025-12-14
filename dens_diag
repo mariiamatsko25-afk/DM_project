@@ -30,7 +30,7 @@ class TimeCounting:
 
     def count(self, vertices, density):
         total_time = 0
-        for _ in range(self.iter_num):
+        for i in range(self.iter_num):
             g = Graph(vertices)
             g.den_generate(density)
             start = time.time()
